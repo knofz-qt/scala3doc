@@ -75,6 +75,30 @@ case class ClasslikeExtension(
 
 object ClasslikeExtension extends BaseKey[DClasslike, ClasslikeExtension]
 
+
+case class PackageExtension(
+  extensions: List[ExtensionGroup],
+  givens: List[Documentable]
+) extends ExtraProperty[DPackage]:
+  override def getKey = PackageExtension
+
+object PackageExtension extends BaseKey[DPackage, PackageExtension]:
+  def apply(ce: ClasslikeExtension): PackageExtension = PackageExtension(ce.extensions, ce.givens)
+
+case class ImplicitMembers(
+  methods: Map[DFunction, DRI] = Map.empty,
+  inheritedMethods: Map[DFunction, DRI] = Map.empty,
+  properties: Map[DProperty, DRI] = Map.empty,
+  givens: Map[Documentable, DRI] = Map.empty,
+  classlikes: Map[DClasslike, DRI] = Map.empty,
+  extensions: Map[ExtensionGroup, DRI] = Map.empty,
+  inheritedExtensions: Map[DFunction, DRI] = Map.empty,
+) extends ExtraProperty[DClasslike]:
+  override def getKey = ImplicitMembers
+
+object ImplicitMembers extends BaseKey[DClasslike, ImplicitMembers]
+
+
 case class SourceLinks(
   links: Map[DokkaConfiguration$DokkaSourceSet, String]
 ) extends ExtraProperty[Documentable]:
@@ -97,6 +121,11 @@ object PropertyExtension extends BaseKey[DProperty, PropertyExtension]
 
 case class AnnotationsInfo(val annotations: List[AnnotationsInfo.Annotation]) extends ExtraProperty[Documentable]:
     override def getKey = AnnotationsInfo
+
+case class ImplicitConversions(val conversions: List[ImplicitConversion]) extends ExtraProperty[WithScope]:
+  override def getKey = ImplicitConversions
+
+object ImplicitConversions extends BaseKey[WithScope, ImplicitConversions]
 
 object AnnotationsInfo extends BaseKey[Documentable, AnnotationsInfo]:
     case class Annotation(val dri: DRI, val params: List[AnnotationParameter])

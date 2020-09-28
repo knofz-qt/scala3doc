@@ -14,6 +14,7 @@ import org.jetbrains.dokka.DokkaConfiguration$DokkaSourceSet
 import org.jetbrains.dokka.base.resolvers.anchors._
 import org.jetbrains.dokka.links._
 import org.jetbrains.dokka.model.doc._
+import org.jetbrains.dokka.links.DRIKt.getParent
 
 
 class ScalaPageCreator(
@@ -26,7 +27,28 @@ class ScalaPageCreator(
 
     override def pageForModule(m: DModule): ModulePageNode = super.pageForModule(m)
 
-    override def pageForPackage(p: DPackage): PackagePageNode = super.pageForPackage(p)
+    override def pageForPackage(p: DPackage): PackagePageNode = {
+        val page = super.pageForPackage(p)
+
+        val ext = Option(p.get(PackageExtension))
+        val extensionPages = ext.fold(
+                List.empty
+            )(
+                _.extensions.flatMap(_.extensions)
+                .map(pageForFunction(_))
+                .map(page =>
+                    page.modified(
+                        "extension_" + page.getName,
+                        page.getChildren
+                    )
+                )
+            )
+
+        page.modified(
+            page.getName,
+            (page.getChildren.asScala ++ extensionPages).asJava
+        )
+    }
 
     override def pageForClasslike(c: DClasslike): ClasslikePageNode = c match {
             case clazz: DClass => pageForDClass(clazz)
@@ -134,11 +156,8 @@ class ScalaPageCreator(
             }
             .group(styles = Set(ContentStyle.TabbedContent)) { b => b
                 .contentForScope(c)
-                .contentForEnum(c)
-                .contentForGivens(c)
                 .contentForConstructors(c)
-                .contentForExtensions(c)
-                .contentForTypesInfo(c)
+                .contentForEnum(c)
             }
         contentBuilder.contentForDocumentable(c, buildBlock = buildBlock)
     }
@@ -242,51 +261,166 @@ class ScalaPageCreator(
             }
         }
 
+        private def implicitConversionLink(dri: DRI)  = {
+            val ifEmptyDri = if getParent(dri).getClassNames != null && getParent(dri).getClassNames.contains("$package$") 
+            then getParent(getParent(dri))
+            else getParent(dri)
+            val ifEmptyName = if ifEmptyDri.getClassNames == null then ifEmptyDri.getPackageName else ifEmptyDri.getClassNames
+            Option(dri.getCallable).fold(
+                b.text("anonymous conversion in ").driLink(ifEmptyName, ifEmptyDri)
+            )(
+                c => b.driLink(c.getName, dri)
+            )
+        }
+
+        def buildImplicitConversionInfo(by: DRI) = 
+            b.table(kind = ContentKind.BriefComment, styles = Set(TableStyle.DescriptionList)){ tbdr => tbdr
+                .cell() { c => c
+                    .text("Implicitly: ")
+                }
+                .cell() { c => c
+                    .text("This member is added by an implicit conversion performed by ")
+                    .implicitConversionLink(by)
+                }
+            }
+
+        private def inheritedExtensionLink(dri: DRI)  = {
+            val ifEmptyDri = if dri.getClassNames != null && dri.getClassNames.contains("$package$") 
+            then getParent(dri)
+            else dri
+            val ifEmptyName = ifEmptyDri.getPackageName
+            Option(dri.getClassNames).filterNot(_.contains("$package$")).fold(
+                b.text("package ").driLink(ifEmptyName, ifEmptyDri)
+            )(
+                c => b.driLink(c, dri)
+            )
+        }
+
+        def buildInheritedExtensionInfo(by: DRI) = 
+            b.table(kind = ContentKind.BriefComment, styles = Set(TableStyle.DescriptionList)){ tbdr => tbdr
+                .cell() { c => c
+                    .text("Implicitly: ")
+                }
+                .cell() { c => c
+                    .text("This member is added by an extension defined in ")
+                    .inheritedExtensionLink(by)
+                }
+            }
+
         def contentForScope(
             s: Documentable & WithScope
         ) = {
             val (typeDefs, valDefs) = s.getProperties.asScala.toList.partition(_.get(PropertyExtension).kind == "type")
             val classes = s.getClasslikes.asScala.toList
-            val inherited = s match {
-                case c: DClass => List("Inherited" -> c.get(ClasslikeExtension).inheritedMethods)
+            val givens = s match {
+                case p: DPackage => Option(p.get(PackageExtension)).map(_.givens).getOrElse(List.empty)
+                case clazz: DClass => clazz.get(ClasslikeExtension).givens
                 case other => List.empty
             }
-             
-            b
-                .contentForComments(s)
-                .divergentBlock(
-                    "Type members",
-                    List("Types" -> typeDefs, "Classlikes" -> classes),
-                    kind = ContentKind.Classlikes
-                )(
-                    (bdr, elem) => bdr.header(3, elem)()
-                )
-                .divergentBlock(
-                    "Methods",
-                    List(
-                        "Class methods" -> s.getFunctions.asScala.toList, 
-                    ) ++ inherited,
-                    kind = ContentKind.Functions,
-                    omitSplitterOnSingletons = false
-                )(
-                    (builder, txt) => builder.header(3, txt)()
-                )
-                .groupingBlock(
-                    "Value members",
-                    List("" -> valDefs),
-                    kind = ContentKind.Properties,
-                    sourceSets = s.getSourceSets.asScala.toSet
-                )(
-                    (bdr, group) => bdr
-                ){ (bdr, elem) => bdr
+            val extensions = s match {
+                case p: DPackage => Option(p.get(PackageExtension)).map(_.extensions).getOrElse(List.empty)
+                case clazz: DClass => clazz.get(ClasslikeExtension).extensions
+                case other => List.empty
+            }
+            val implicits = s match {
+                case c: DClass => c.get(ImplicitMembers)
+                case other => ImplicitMembers()
+            }
+            val implicitMap = (
+                implicits.classlikes ++ 
+                implicits.properties ++ 
+                implicits.methods ++ 
+                implicits.inheritedMethods ++
+                implicits.givens ++
+                implicits.extensions.flatMap( (key, value) => key.extensions.map(_ -> value) ).toMap
+            ).toMap
+            val inherited = s match {
+                case c: DClass => List("Inherited" -> (c.get(ClasslikeExtension).inheritedMethods ++ implicits.inheritedMethods.keys.toList))
+                case other => List.empty
+            }
+            
+            b.contentForComments(s)
+            .groupingBlock(
+                "Type members",
+                List(
+                    "Types" -> (typeDefs ++ implicits.properties.keys.toList.filter(_.get(PropertyExtension).kind == "type")), 
+                    "Classlikes" -> (classes ++ implicits.classlikes.keys.toList)
+                ),
+                kind = ContentKind.Classlikes
+            )(
+                (bdr, elem) => bdr.header(3, elem)()
+            ){ (bdr, elem) => bdr
+                .driLink(elem.getName, elem.getDri)
+                .sourceSetDependentHint(Set(elem.getDri), elem.getSourceSets.asScala.toSet, kind = ContentKind.SourceSetDependentHint) { sbdr => 
+                    val withBrief = sbdr.contentForBrief(elem)
+                    (if implicitMap.contains(elem) then withBrief.buildImplicitConversionInfo(implicitMap(elem)) else withBrief)
+                    .signature(elem)
+                }
+            }
+            .groupingBlock(
+                "Methods",
+                List(
+                    "Class methods" -> (s.getFunctions.asScala.toList ++ implicits.methods.keys.toList ++ implicits.inheritedExtensions.keys.toList), 
+                ) ++ inherited,
+                kind = ContentKind.Functions,
+                omitSplitterOnSingletons = false
+            )(
+                (builder, txt) => builder.header(3, txt)()
+            ){ (bdr, elem) => bdr
+                .driLink(elem.getName, elem.getDri)
+                .sourceSetDependentHint(Set(elem.getDri), elem.getSourceSets.asScala.toSet, kind = ContentKind.SourceSetDependentHint) { sbdr => 
+                    val withBrief = sbdr.contentForBrief(elem)
+                    (if implicitMap.contains(elem) then withBrief.buildImplicitConversionInfo(implicitMap(elem)) 
+                    else if implicits.inheritedExtensions.contains(elem) then withBrief.buildInheritedExtensionInfo(implicits.inheritedExtensions(elem))
+                    else withBrief)
+                    .signature(elem)
+                }
+            }
+            .groupingBlock(
+                "Value members",
+                List("" -> (valDefs ++ implicits.properties.keys.toList.filter(_.get(PropertyExtension).kind != "type"))),
+                kind = ContentKind.Properties,
+                sourceSets = s.getSourceSets.asScala.toSet
+            )(
+                (bdr, group) => bdr
+            ){ (bdr, elem) => bdr
+                .driLink(elem.getName, elem.getDri)
+                .sourceSetDependentHint(Set(elem.getDri), elem.getSourceSets.asScala.toSet, kind = ContentKind.SourceSetDependentHint) { sbdr => 
+                    val withBrief = sbdr.contentForBrief(elem)
+                    (if implicitMap.contains(elem) then withBrief.buildImplicitConversionInfo(implicitMap(elem)) else withBrief)
+                    .signature(elem)
+                }
+            }
+            .groupingBlock(
+                "Given",
+                if(!givens.isEmpty) List(() -> (givens.sortBy(_.getName).toList ++ implicits.givens.keys.toList)) else List.empty,
+                kind = ContentKind.Functions
+            )( (bdr, splitter) => bdr ){ (bdr, elem) => bdr
+                .driLink(elem.getName, elem.getDri)
+                .sourceSetDependentHint(Set(elem.getDri), elem.getSourceSets.asScala.toSet, kind = ContentKind.SourceSetDependentHint) { sbdr => 
+                    val withBrief = sbdr.contentForBrief(elem)
+                    (if implicitMap.contains(elem) then withBrief.buildImplicitConversionInfo(implicitMap(elem)) else withBrief)
+                    .signature(elem)
+                }
+            }
+            .groupingBlock(
+                "Extensions",
+                (implicits.extensions.keys.toList ++ extensions).map(e => e.extendedSymbol -> e.extensions).sortBy(_._2.size),
+                kind = ContentKind.Extensions
+            )( (bdr, receiver) => bdr 
+                .group(){ grpbdr => grpbdr
+                    .signature(receiver)
+                }
+            ){ (bdr, elem) => bdr
                     .driLink(elem.getName, elem.getDri)
-                    .sourceSetDependentHint(Set(elem.getDri), elem.getSourceSets.asScala.toSet, kind = ContentKind.SourceSetDependentHint) { sbdr => sbdr
-                        .contentForBrief(elem)
+                    .sourceSetDependentHint(Set(elem.getDri), elem.getSourceSets.asScala.toSet, kind = ContentKind.SourceSetDependentHint) { sbdr => 
+                        val withBrief = sbdr.contentForBrief(elem)
+                        (if implicitMap.contains(elem) then withBrief.buildImplicitConversionInfo(implicitMap(elem)) else withBrief)
                         .signature(elem)
                     }
-                }
+            }
         }
-    
+
         def contentForEnum(
             c: DClass
         ) = b.groupingBlock(
@@ -294,77 +428,29 @@ class ScalaPageCreator(
             List(() -> Option(c.get(EnumExtension)).fold(List.empty)(_.enumEntries.sortBy(_.getName).toList)),
             kind = ContentKind.Properties
         )( (bdr, splitter) => bdr ){ (bdr, elem) => bdr
-            .driLink(elem.getName, elem.getDri, kind = ContentKind.Main)
-            .sourceSetDependentHint(
-                dri = Set(elem.getDri), 
-                sourceSets = elem.getSourceSets.asScala.toSet, 
-                kind = ContentKind.SourceSetDependentHint
-            ){ srcsetbdr => srcsetbdr
-                .contentForBrief(elem)
-                .signature(elem)
-            }
-        }
-
-        def contentForGivens(c: DClass) = {
-            val givens = c.get(ClasslikeExtension).givens
-            b.groupingBlock(
-                "Given",
-                if(!givens.isEmpty) List(() -> givens.sortBy(_.getName).toList) else List.empty,
-                kind = ContentKind.Functions
-            )( (bdr, splitter) => bdr ){ (bdr, elem) => bdr
-                .driLink(elem.getName, elem.getDri, kind = ContentKind.Main)
-                .sourceSetDependentHint(
-                    dri = Set(elem.getDri), 
-                    sourceSets = elem.getSourceSets.asScala.toSet, 
-                    kind = ContentKind.SourceSetDependentHint
-                ){ srcsetbdr => srcsetbdr
+                .driLink(elem.getName, elem.getDri)
+                .sourceSetDependentHint(Set(elem.getDri), elem.getSourceSets.asScala.toSet, kind = ContentKind.SourceSetDependentHint) { sbdr => sbdr
                     .contentForBrief(elem)
                     .signature(elem)
                 }
-            }
-        }
-
-        def contentForExtensions(
-            c: DClass
-        ) = b.groupingBlock(
-            "Extensions",
-            c.get(ClasslikeExtension).extensions.map(e => e.extendedSymbol -> e.extensions).sortBy(_._2.size),
-            kind = ContentKind.Extensions
-        )( (bdr, receiver) => bdr 
-            .group(){ grpbdr => grpbdr
-                .signature(receiver)
-            }
-        ){ (bdr, elem) => bdr
-            .driLink(elem.getName, elem.getDri, kind = ContentKind.Main)
-            .sourceSetDependentHint(
-                dri = Set(elem.getDri), 
-                sourceSets = elem.getSourceSets.asScala.toSet, 
-                kind = ContentKind.SourceSetDependentHint
-            ){ srcsetbdr => srcsetbdr
-                .contentForBrief(elem)
-                .signature(elem)
-            }
         }
 
         def contentForConstructors(
-            c: DClass
-        ) = b.groupingBlock(
-            "Constructors",
-            List("" -> c.getConstructors.asScala.toList),
-            kind = ContentKind.Constructors
-        )(
-            (bdr, group) => bdr
-        ){ (bdr, elem) => bdr
-            .driLink(elem.getName, elem.getDri)
-            .sourceSetDependentHint(
-                Set(elem.getDri),
-                elem.getSourceSets.asScala.toSet,
-                kind = ContentKind.SourceSetDependentHint
-            ) { sbdr => sbdr
-                .contentForBrief(elem)
-                .signature(elem)
+                c: DClass
+            ) = b.groupingBlock(
+                "Constructors",
+                List("" -> c.getConstructors.asScala.toList),
+                kind = ContentKind.Constructors
+            )(
+                (bdr, group) => bdr
+            ){ (bdr, elem) => bdr
+                    .driLink(elem.getName, elem.getDri)
+                    .sourceSetDependentHint(Set(elem.getDri), elem.getSourceSets.asScala.toSet, kind = ContentKind.SourceSetDependentHint) { sbdr => sbdr
+                        .contentForBrief(elem)
+                        .signature(elem)
+                    }
             }
-        }
+    
 
         def contentForTypesInfo(c: DClass) = {
             val inheritanceInfo = c.get(InheritanceInfo)

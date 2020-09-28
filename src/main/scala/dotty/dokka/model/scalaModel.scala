@@ -61,3 +61,5 @@ case class HtmlContentNode(
   override def getChildren: JList[ContentNode] = Nil.asJava
   override def getExtra = extra
   override def withNewExtras(p: PropertyContainer[ContentNode]) = copy(extra = p)
+
+case class ImplicitConversion(conversion: DRI, from: DRI, to: DRI)

@@ -394,6 +394,10 @@ dl > div > ol {
   list-style-type: none;
 }
 
+.platform-dependent-row dl.attributes > dd {
+  padding-left: 3em;
+}
+
 
 /* Footer */
 footer {
