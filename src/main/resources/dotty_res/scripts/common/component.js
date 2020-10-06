@@ -22,6 +22,12 @@ class Component {
     this.renderComp(this.state);
   }
 
+  unmount() {
+    if (typeof this.componentWillUnmount === "function") {
+      this.componentWillUnmount();
+    }
+  }
+
   setState(nextState) {
     if (typeof nextState === "function") {
       this.state = {
