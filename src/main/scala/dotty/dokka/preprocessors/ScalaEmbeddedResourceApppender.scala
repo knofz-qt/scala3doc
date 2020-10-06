@@ -19,7 +19,10 @@ class ScalaEmbeddedResourceAppender extends PageTransformer {
           "styles/dotty-icons.css",
           "hljs/highlight.pack.js",
           "scripts/hljs-scala3.js",
-          "scripts/ux.js"
+          "scripts/ux.js",
+          "scripts/common/init.js",
+          "scripts/common/Component.js",
+          "scripts/FilterBar.js"
         )).asJava,
         page.getChildren
       )
