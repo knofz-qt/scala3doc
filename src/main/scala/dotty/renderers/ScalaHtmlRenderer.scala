@@ -39,7 +39,7 @@ class ScalaHtmlRenderer(ctx: DokkaContext) extends SiteRenderer(ctx) {
         node match {
             case n: HtmlContentNode => withHtml(f, raw(n.body).toString)
             case n: DocumentableList => withHtml(f, buildDocumentableList(n).toString())
-            case n: DocumentableFilter => withHtml(f, div(`class` := "documentableFilter")("filter instance here").toString)
+            case n: DocumentableFilter => withHtml(f, buildDocumentableFilter.toString)
             case other => super.buildContentNode(f, node, pageContext, sourceSetRestriciton)
         }
     }
@@ -71,6 +71,20 @@ class ScalaHtmlRenderer(ctx: DokkaContext) extends SiteRenderer(ctx) {
                 div(clazz := "brief")(raw("TODO use dokka"))
             )
         }
+    )
+
+    private def buildDocumentableFilter = div(clazz := "documentableFilter")(
+        div(clazz := "upperContainer")(
+            button(clazz := "filterToggleButton")(
+                raw("""
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
+                        <path d="M0 0h24v24H0z" fill="none"/>
+                        <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                    </svg>
+                """)
+            ),
+            input(clazz := "filterable-input", placeholder := "Filter all members")
+        )
     )
 
     def buildDescriptionList(node: ContentTable, pageContext: ContentPage, sourceSetRestriciton: JSet[DisplaySourceSet]) = {
