@@ -5,30 +5,11 @@ class Component {
     this.props = props;
     this.mounted = false;
 
-    this.renderComp(this.state);
-  }
-
-  mountComp() {
-    if (typeof this.componentDidMount === "function") {
-      this.componentDidMount();
-    }
-    this.renderComp(this.state);
-  }
-
-  updateComp() {
-    if (typeof this.componentDidUpdate === "function") {
-      this.componentDidUpdate();
-    }
-    this.renderComp(this.state);
-  }
-
-  unmount() {
-    if (typeof this.componentWillUnmount === "function") {
-      this.componentWillUnmount();
-    }
+    this.render(this.state);
   }
 
   setState(nextState) {
+    const prevState = { ...this.state };
     if (typeof nextState === "function") {
       this.state = {
         ...this.state,
@@ -41,18 +22,10 @@ class Component {
       };
     }
 
-    this.renderComp(prevState);
-  }
+    this.componentDidUpdate(prevState);
 
-  renderComp(prevState) {
-    if (!this.mounted) {
-      this.mounted = true;
-      this.mountComp();
-    }
-
-    if (this.mounted && this.state !== prevState) {
-      this.updateComp();
-    }
     this.render();
   }
+
+  render() {}
 }

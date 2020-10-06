@@ -3,15 +3,12 @@ class Input extends Component {
     super(props);
 
     this.inputRef = findRef("filterableInput");
+    this.onChangeFn = withEvent(this.inputRef, "input", this.onInputChange);
   }
 
   onInputChange = ({ currentTarget: { value } }) => {
-    console.log(value);
+    this.props.onInputChange(value);
   };
-
-  componentDidMount() {
-    this.onChangeFn = withEvent(this.inputRef, "onChange", this.onInputChange);
-  }
 
   componentWillUnmount() {
     if (this.onChangeFn) {

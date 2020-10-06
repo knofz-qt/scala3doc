@@ -2,18 +2,22 @@ class FilterBar extends Component {
   constructor(props) {
     super(props);
 
-    this.inputComp = new Input();
+    this.inputComp = new Input({ onInputChange: this.onInputChange });
   }
 
-  componentDidMount() {}
+  componentDidUpdate() {
+    console.log(this.state);
+  }
 
   componentWillUnmount() {
     this.inputComp.componentWillUnmount();
   }
 
-  render() {
-    this.inputComp.render();
-  }
+  onInputChange = (value) => {
+    console.log(value);
+  };
+
+  render() {}
 }
 
 init(() => new FilterBar());
