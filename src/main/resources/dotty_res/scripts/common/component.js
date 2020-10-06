@@ -22,7 +22,9 @@ class Component {
       };
     }
 
-    this.componentDidUpdate(prevState);
+    if (this.componentDidUpdate) {
+      this.componentDidUpdate(prevState);
+    }
 
     this.render();
   }

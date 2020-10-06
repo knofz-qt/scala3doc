@@ -3,6 +3,14 @@
   background-color: var(--leftbar-bg);
 }
 
+.documentableFilter.active .filterToggleButton svg {
+  transform: rotate(90deg);
+}
+
+.documentableFilter.active .filterLowerContainer {
+  display: block;
+}
+
 .filterUpperContainer {
   display: flex;
   align-items: center;
@@ -39,10 +47,6 @@
 .filterLowerContainer {
   padding-top: 30px;
   display: none;
-}
-
-.filterLowerContainer.active {
-  display: block;
 }
 
 .filterGroup {

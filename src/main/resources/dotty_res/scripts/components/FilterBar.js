@@ -2,12 +2,16 @@ class FilterBar extends Component {
   constructor(props) {
     super(props);
 
-    this.inputComp = new Input({ onInputChange: this.onInputChange });
-    this.filterGroupComp = new FilterGroup();
-  }
+    this.state = {
+      isVisible: false,
+    };
 
-  componentDidUpdate() {
-    console.log(this.state);
+    this.filterBarRef = findRef("documentableFilter");
+
+    this.inputComp = new Input({ onInputChange: this.onInputChange });
+    this.filterGroupComp = new FilterGroup({
+      onFilterToggleClick: this.onFilterToggleClick,
+    });
   }
 
   componentWillUnmount() {
@@ -18,7 +22,21 @@ class FilterBar extends Component {
     console.log(value);
   };
 
-  render() {}
+  onFilterToggleClick = () => {
+    this.setState((prevState) => ({ isVisible: !prevState.isVisible }));
+  };
+
+  render() {
+    const { isVisible } = this.state;
+
+    if (this.filterBarRef) {
+      if (isVisible) {
+        this.filterBarRef.classList.add("active");
+      } else {
+        this.filterBarRef.classList.remove("active");
+      }
+    }
+  }
 }
 
 init(() => new FilterBar());
