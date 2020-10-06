@@ -32,6 +32,44 @@
   flex: 1;
   outline: 0;
   border: 0;
-  border-radius: 2px;
+  border-radius: 3px;
   background-color: var(--code-bg);
+}
+
+.filterLowerContainer {
+  padding-top: 30px;
+  display: none;
+}
+
+.filterLowerContainer.active {
+  display: block;
+}
+
+.filterGroup {
+  display: flex;
+}
+
+.filterList {
+  margin-left: 10px;
+}
+
+.filterButtonItem {
+  padding: 6px 16px;
+  margin-bottom: 6px;
+  margin-right: 6px;
+  outline: 0;
+  border: 0;
+  border-radius: 3px;
+  color: var(--leftbar-bg);
+  background-color: var(--code-bg);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.groupTitle {
+  margin-top: 3px;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--code-bg);
 }

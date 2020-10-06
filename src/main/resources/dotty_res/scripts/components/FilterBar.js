@@ -3,6 +3,7 @@ class FilterBar extends Component {
     super(props);
 
     this.inputComp = new Input({ onInputChange: this.onInputChange });
+    this.filterGroupComp = new FilterGroup();
   }
 
   componentDidUpdate() {

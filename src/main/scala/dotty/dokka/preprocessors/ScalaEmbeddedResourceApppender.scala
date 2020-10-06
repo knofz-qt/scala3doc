@@ -26,7 +26,8 @@ class ScalaEmbeddedResourceAppender extends PageTransformer {
           "scripts/common/withEvent.js",
           "scripts/common/findRef.js",
           "scripts/components/FilterBar.js",
-          "scripts/components/Input.js"
+          "scripts/components/Input.js",
+          "scripts/components/FilterGroup.js"
         )).asJava,
         page.getChildren
       )

@@ -84,6 +84,15 @@ class ScalaHtmlRenderer(ctx: DokkaContext) extends SiteRenderer(ctx) {
                 """)
             ),
             input(clazz := "filterableInput", placeholder := "Filter all members")
+        ),
+        div(clazz := "filterLowerContainer")(
+            div(clazz := "filterGroup")(
+                span(clazz := "groupTitle")("Ordering"),
+                div(clazz := "filterList")(
+                    button(clazz := "filterButtonItem")("Alphabetical"),
+                    button(clazz := "filterButtonItem")("By inherance"),
+                )
+            )
         )
     )
 
