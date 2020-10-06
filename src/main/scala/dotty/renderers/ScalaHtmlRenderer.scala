@@ -74,7 +74,7 @@ class ScalaHtmlRenderer(ctx: DokkaContext) extends SiteRenderer(ctx) {
     )
 
     private def buildDocumentableFilter = div(clazz := "documentableFilter")(
-        div(clazz := "upperContainer")(
+        div(clazz := "filterUpperContainer")(
             button(clazz := "filterToggleButton")(
                 raw("""
                     <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
@@ -83,7 +83,7 @@ class ScalaHtmlRenderer(ctx: DokkaContext) extends SiteRenderer(ctx) {
                     </svg>
                 """)
             ),
-            input(clazz := "filterable-input", placeholder := "Filter all members")
+            input(clazz := "filterableInput", placeholder := "Filter all members")
         )
     )
 
