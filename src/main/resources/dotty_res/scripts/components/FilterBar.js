@@ -3,23 +3,24 @@ class FilterBar extends Component {
     super(props);
 
     this.state = {
+      value: "",
       isVisible: false,
     };
 
-    this.filterBarRef = findRef("documentableFilter");
+    this.filterBarRef = findRef(".documentableFilter");
 
     this.inputComp = new Input({ onInputChange: this.onInputChange });
+    this.documentableList = new DocumentableList({ value: this.state.value });
     this.filterGroupComp = new FilterGroup({
       onFilterToggleClick: this.onFilterToggleClick,
     });
   }
 
-  componentWillUnmount() {
-    this.inputComp.componentWillUnmount();
-  }
-
   onInputChange = (value) => {
-    console.log(value);
+    this.setState({ value }, () => {
+      this.documentableList.render({ value: this.state.value });
+      this.filterGroupComp.render();
+    });
   };
 
   onFilterToggleClick = () => {

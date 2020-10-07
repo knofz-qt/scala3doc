@@ -2,7 +2,7 @@ class Input extends Component {
   constructor(props) {
     super(props);
 
-    this.inputRef = findRef("filterableInput");
+    this.inputRef = findRef(".filterableInput");
     this.onChangeFn = withEvent(this.inputRef, "input", this.onInputChange);
   }
 

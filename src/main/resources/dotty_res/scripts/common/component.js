@@ -5,7 +5,7 @@ class Component {
     this.state = {};
   }
 
-  setState(nextState) {
+  setState(nextState, cb = () => {}) {
     const prevState = { ...this.state };
     if (typeof nextState === "function") {
       this.state = {
@@ -19,9 +19,7 @@ class Component {
       };
     }
 
-    if (this.componentDidUpdate) {
-      this.componentDidUpdate(prevState);
-    }
+    cb();
 
     if (this.render) {
       this.render();

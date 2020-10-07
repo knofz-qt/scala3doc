@@ -7,12 +7,11 @@ class FilterGroup extends Component {
     super(props);
 
     this.state = {
-      groups: this.generateGroups(),
       isVisible: false,
     };
 
-    this.filterToggleRef = findRef("filterToggleButton");
-    this.filterLowerContainerRef = findRef("filterLowerContainer");
+    this.filterToggleRef = findRef(".filterToggleButton");
+    this.filterLowerContainerRef = findRef(".filterLowerContainer");
 
     this.onClickFn = withEvent(
       this.filterToggleRef,
@@ -26,7 +25,7 @@ class FilterGroup extends Component {
   generateGroups() {
     return {
       ...defaultFilterGroup,
-      ...[...findRefs("documentableElement")].reduce(
+      ...[...findRefs(`.documentableElement[data-visibility="true"]`)].reduce(
         this.getGroupFromDataset,
         {}
       ),
@@ -35,6 +34,9 @@ class FilterGroup extends Component {
 
   getGroupFromDataset(group, { dataset }) {
     Object.entries(dataset).map(([key, value]) => {
+      if (!startsWith(key, "f")) {
+        return;
+      }
       if (!group[key]) {
         group[key] = [value];
       } else if (!group[key].includes(value)) {
@@ -58,10 +60,13 @@ class FilterGroup extends Component {
   }
 
   render() {
-    const { groups } = this.state;
+    const groups = this.generateGroups();
 
-    this.filterLowerContainerRef.innerHTML = Object.entries(
-      groups
-    ).map(([key, values]) => this.getFilterGroup(key, values));
+    attachDOM(
+      this.filterLowerContainerRef,
+      Object.entries(groups).map(([key, values]) =>
+        this.getFilterGroup(key, values)
+      )
+    );
   }
 }
