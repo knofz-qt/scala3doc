@@ -1,7 +1,3 @@
-const defaultFilterGroup = {
-  FOrdering: ["Alphabetical"],
-};
-
 class FilterGroup extends Component {
   constructor(props) {
     super(props);
@@ -16,34 +12,14 @@ class FilterGroup extends Component {
     this.onClickFn = withEvent(
       this.filterToggleRef,
       "click",
-      this.props.onFilterToggleClick
+      this.props.onFilterVisibilityChange
     );
 
-    this.render();
+    this.render(this.props);
   }
 
-  generateGroups() {
-    return {
-      ...defaultFilterGroup,
-      ...[...findRefs(`.documentableElement[data-visibility="true"]`)].reduce(
-        this.getGroupFromDataset,
-        {}
-      ),
-    };
-  }
-
-  getGroupFromDataset(group, { dataset }) {
-    Object.entries(dataset).map(([key, value]) => {
-      if (!startsWith(key, "f")) {
-        return;
-      }
-      if (!group[key]) {
-        group[key] = [value];
-      } else if (!group[key].includes(value)) {
-        group[key].push(value);
-      }
-    });
-    return group;
+  isActive(isActive) {
+    return isActive ? "active" : "";
   }
 
   getFilterGroup(title, values) {
@@ -51,22 +27,38 @@ class FilterGroup extends Component {
       <div class="filterGroup">
         <span class="groupTitle">${title.substring(1)}</span>
         <div class="filterList">
-          ${values.map(
-            (value) => `<button class="filterButtonItem">${value}</button>`
+          ${Object.entries(values).map(
+            ([key, isActive]) =>
+              `<button class="filterButtonItem ${this.isActive(
+                isActive
+              )}" data-key="${title}" data-value="${key}">${key}</button>`
           )}
         </div>
       </div>
     `;
   }
 
-  render() {
-    const groups = this.generateGroups();
+  onFilterClick = ({
+    currentTarget: {
+      dataset: { key, value },
+    },
+  }) => {
+    this.props.onFilterToggle(key, value);
+  };
 
+  attachFiltersClicks() {
+    [
+      ...findRefs("button.filterButtonItem", this.filterLowerContainerRef),
+    ].map((buttonRef) => withEvent(buttonRef, "click", this.onFilterClick));
+  }
+
+  render({ groups }) {
     attachDOM(
       this.filterLowerContainerRef,
       Object.entries(groups).map(([key, values]) =>
         this.getFilterGroup(key, values)
       )
     );
+    this.attachFiltersClicks();
   }
 }
