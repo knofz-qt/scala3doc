@@ -21,10 +21,8 @@ class ScalaEmbeddedResourceAppender extends PageTransformer {
           "hljs/highlight.pack.js",
           "scripts/hljs-scala3.js",
           "scripts/ux.js",
-          "scripts/common/init.js",
           "scripts/common/component.js",
-          "scripts/common/withEvent.js",
-          "scripts/common/findRef.js",
+          "scripts/common/utils.js",
           "scripts/components/FilterBar.js",
           "scripts/components/Input.js",
           "scripts/components/FilterGroup.js"

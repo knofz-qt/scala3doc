@@ -1,11 +1,8 @@
 class Component {
-  state = {};
-
   constructor(props = {}) {
     this.props = props;
-    this.mounted = false;
-
-    this.render(this.state);
+    this.prevProps = {};
+    this.state = {};
   }
 
   setState(nextState) {
@@ -26,8 +23,8 @@ class Component {
       this.componentDidUpdate(prevState);
     }
 
-    this.render();
+    if (this.render) {
+      this.render();
+    }
   }
-
-  render() {}
 }
