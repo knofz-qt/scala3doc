@@ -6,11 +6,18 @@ class DocumentableList extends Component {
     this.render(this.props);
   }
 
-  filterLists = (inputValue, filters) => (togglableRef) => {
-    return [...findRefs(".documentableList", togglableRef)].map((listRef) => {
-      const visibleChildren = this.filterElements(listRef, inputValue, filters);
-      ifVisible(visibleChildren.length, listRef, "block");
-    });
+  filterLists = (inputValue, filters, togglableRef) => {
+    return [...findRefs(".documentableList", togglableRef)]
+      .map((listRef) => {
+        const visibleChildren = this.filterElements(
+          listRef,
+          inputValue,
+          filters
+        );
+        ifVisible(visibleChildren.length, listRef, "block");
+        return visibleChildren.length;
+      })
+      .some((visibleElements) => visibleElements > 0);
   };
 
   filterElements = (listRef, inputValue, filters) => {
@@ -44,6 +51,8 @@ class DocumentableList extends Component {
   };
 
   render({ value, filters }) {
-    this.togglableRefs.map(this.filterLists(value, filters));
+    this.togglableRefs.map((toggableRef) => {
+      this.filterLists(value, filters, toggableRef);
+    });
   }
 }
