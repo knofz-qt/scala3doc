@@ -29,7 +29,10 @@ class FilterBar extends Component {
 
   onInputChange = (value) => {
     this.setState(
-      (prev) => ({ value, filters: this.generateGroups(this.state.filters) }),
+      (prevState) => ({
+        value,
+        filters: this.generateGroups(prevState.filters),
+      }),
       () => {
         this.documentableList.render({
           value: this.state.value,
@@ -87,13 +90,10 @@ class FilterBar extends Component {
   };
 
   generateGroups(initial = {}) {
-    return {
-      ...defaultFilterGroup,
-      ...[...findRefs(".documentableElement")].reduce(
-        this.getGroupFromDataset,
-        initial
-      ),
-    };
+    return [...findRefs(".documentableElement")].reduce(
+      this.getGroupFromDataset,
+      initial
+    );
   }
 
   getGroupFromDataset(group, { dataset }) {
