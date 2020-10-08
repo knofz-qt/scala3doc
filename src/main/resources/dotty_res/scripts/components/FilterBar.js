@@ -22,6 +22,7 @@ class FilterBar extends Component {
     this.filterGroupComp = new FilterGroup({
       groups: this.state.filters,
       onFilterToggle: this.onFilterToggle,
+      onGroupSelectChange: this.onGroupSelectChange,
       onFilterVisibilityChange: this.onFilterVisibilityChange,
     });
   }
@@ -29,6 +30,27 @@ class FilterBar extends Component {
   onInputChange = (value) => {
     this.setState(
       (prev) => ({ value, filters: this.generateGroups(this.state.filters) }),
+      () => {
+        this.documentableList.render({
+          value: this.state.value,
+          filters: this.state.filters,
+        });
+        this.filterGroupComp.render({ groups: this.state.filters });
+      }
+    );
+  };
+
+  onGroupSelectChange = (key, isActive) => {
+    this.setState(
+      (prevState) => ({
+        filters: {
+          ...prevState.filters,
+          [key]: Object.keys(prevState.filters[key]).reduce(
+            (obj, key) => ((obj[key] = isActive), obj),
+            {}
+          ),
+        },
+      }),
       () => {
         this.documentableList.render({
           value: this.state.value,

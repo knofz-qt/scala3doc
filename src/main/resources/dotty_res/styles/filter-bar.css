@@ -51,6 +51,7 @@
 
 .filterGroup {
   display: flex;
+  margin-bottom: 16px;
 }
 
 .filterList {
@@ -85,9 +86,38 @@
 }
 
 .groupTitle {
-  min-width: 88px;
+  min-width: 98px;
   margin-top: 4px;
   font-weight: 700;
   font-size: 14px;
   color: var(--code-bg);
+}
+
+.groupButtonsContainer {
+  display: flex;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.selectAll {
+  margin-right: 4px;
+}
+
+.selectAll,
+.deselectAll {
+  outline: 0;
+  border: 0;
+  background-color: transparent;
+  padding: 0;
+  color: var(--code-bg);
+  font-size: 8px;
+  cursor: pointer;
+  transition: color 0.1s ease-in;
+}
+
+.selectAll:hover,
+.selectAll:focus,
+.deselectAll:hover,
+.deselectAll:focus {
+  color: var(--active-tab-color);
 }
