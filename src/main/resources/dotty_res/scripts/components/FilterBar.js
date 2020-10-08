@@ -27,13 +27,16 @@ class FilterBar extends Component {
   }
 
   onInputChange = (value) => {
-    this.setState({ value, filters: this.generateGroups() }, () => {
-      this.documentableList.render({
-        value: this.state.value,
-        filters: this.state.filters,
-      });
-      this.filterGroupComp.render({ groups: this.state.filters });
-    });
+    this.setState(
+      (prev) => ({ value, filters: this.generateGroups(this.state.filters) }),
+      () => {
+        this.documentableList.render({
+          value: this.state.value,
+          filters: this.state.filters,
+        });
+        this.filterGroupComp.render({ groups: this.state.filters });
+      }
+    );
   };
 
   onFilterVisibilityChange = () => {
@@ -61,32 +64,30 @@ class FilterBar extends Component {
     );
   };
 
-  generateGroups() {
+  generateGroups(initial = {}) {
     return {
       ...defaultFilterGroup,
       ...[...findRefs(".documentableElement")].reduce(
         this.getGroupFromDataset,
-        {}
+        initial
       ),
     };
   }
 
   getGroupFromDataset(group, { dataset }) {
-    if (dataset.visibility === "true" || !dataset.visibility) {
-      Object.entries(dataset).map(([key, value]) => {
-        if (!startsWith(key, "f")) {
-          return;
-        }
-        if (!group[key]) {
-          group[key] = { [value]: true };
-        } else {
-          group[key] = {
-            ...group[key],
-            [value]: true,
-          };
-        }
-      });
-    }
+    Object.entries(dataset).map(([key, value]) => {
+      if (!startsWith(key, "f")) {
+        return;
+      }
+      if (!group[key]) {
+        group[key] = { [value]: true };
+      } else {
+        group[key] = {
+          ...group[key],
+          [value]: group[key][value] ?? true,
+        };
+      }
+    });
     return group;
   }
 

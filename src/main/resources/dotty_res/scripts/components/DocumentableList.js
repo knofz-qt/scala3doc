@@ -33,7 +33,7 @@ class DocumentableList extends Component {
   isAnyFilterSelected = ({ dataset }, filters) => {
     return Object.keys(dataset)
       .filter((key) => startsWith(key, "f"))
-      .some((key) => filters[key][dataset[key]]);
+      .some((key) => filters[key] && filters[key][dataset[key]]);
   };
 
   includesInputValue = ({ name, description }, inputValue) => {
