@@ -17,6 +17,7 @@ class FilterBar extends Component {
     this.inputComp = new Input({ onInputChange: this.onInputChange });
     this.documentableList = new DocumentableList({
       value: this.state.value,
+      filters: this.state.filters,
     });
     this.filterGroupComp = new FilterGroup({
       groups: this.state.filters,
@@ -27,7 +28,10 @@ class FilterBar extends Component {
 
   onInputChange = (value) => {
     this.setState({ value, filters: this.generateGroups() }, () => {
-      this.documentableList.render({ value: this.state.value });
+      this.documentableList.render({
+        value: this.state.value,
+        filters: this.state.filters,
+      });
       this.filterGroupComp.render({ groups: this.state.filters });
     });
   };
@@ -48,7 +52,10 @@ class FilterBar extends Component {
         },
       }),
       () => {
-        this.documentableList.render({ value: this.state.value });
+        this.documentableList.render({
+          value: this.state.value,
+          filters: this.state.filters,
+        });
         this.filterGroupComp.render({ groups: this.state.filters });
       }
     );
